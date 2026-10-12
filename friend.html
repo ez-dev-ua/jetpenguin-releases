@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jet Penguin - friend invite</title>
+<meta name="description" content="Add a friend in Jet Penguin">
+<style>
+  :root { --bg: #0d1226; --panel: #17204a; --text: #ffffff; --muted: #b9c6ef; --accent: #ff9f1c; --green: #3ccf6e; --code: #ffd75a; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; background: linear-gradient(#0d1226, #25336e); color: var(--text);
+         font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; display: flex; align-items: center;
+         justify-content: center; padding: 16px; }
+  main { width: 100%; max-width: 420px; background: var(--panel); border: 3px solid #000; border-radius: 28px;
+         padding: 28px 22px; text-align: center; box-shadow: 0 10px 0 #0a0f22; }
+  h1 { margin: 0 0 6px; font-size: 34px; color: #c0ebff; -webkit-text-stroke: 1px #000; }
+  p { color: var(--muted); font-size: 18px; line-height: 1.4; margin: 10px 0; }
+  .code { font-size: 44px; font-weight: 900; letter-spacing: 4px; color: var(--code); margin: 14px 0 6px; }
+  a.button, button { display: block; width: 100%; margin: 12px 0 0; padding: 16px; border: 3px solid #000;
+         border-radius: 18px; font-size: 20px; font-weight: 800; color: #fff; text-decoration: none; cursor: pointer;
+         box-shadow: 0 6px 0 rgba(0, 0, 0, 0.45); }
+  .open { background: var(--accent); }
+  .download { background: #3d7bff; }
+  .copy { background: var(--green); }
+  .hidden { display: none; }
+  small { display: block; margin-top: 16px; color: #8090c0; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Jet Penguin</h1>
+  <p id="invite"></p>
+  <div class="code" id="code"></div>
+  <p id="how"></p>
+  <a class="button open hidden" id="open"></a>
+  <a class="button download" id="download" href="https://ez-dev-ua.itch.io/jet-penguin"></a>
+  <button class="copy" id="copy" type="button"></button>
+  <small>EZ.DEV.UA</small>
+</main>
+<script>
+  // Friend invite page (Jet Penguin, Services/Device/InviteLinks.cs). On Android it opens the game with
+  // jetpenguin://friend/<code>; without the game Chrome falls back to this page with noapp=1.
+  var texts = {
+    en: { invite: "You're invited to be friends!", how: "Open the game and it adds the friend by itself, or enter the code in Records > Friends.",
+          bad: "This invite has no valid code.", open: "Open in the game", download: "Download the game",
+          copy: "Copy the code", copied: "Copied!", noapp: "Install the game, then enter the code in Records > Friends." },
+    ru: { invite: "Тебя приглашают в друзья!", how: "Открой игру, и друг добавится сам, или введи код в «Рекорды» > «Друзья».",
+          bad: "В приглашении нет правильного кода.", open: "Открыть в игре", download: "Скачать игру",
+          copy: "Скопировать код", copied: "Скопировано!", noapp: "Установи игру, затем введи код в «Рекорды» > «Друзья»." }
+  };
+  var lang = /^(ru|uk|be)/i.test(navigator.language || "") ? "ru" : "en";
+  var t = texts[lang];
+  var params = new URLSearchParams(location.search);
+  var code = (params.get("code") || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  var valid = /^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{6}$/.test(code);
+  var android = /android/i.test(navigator.userAgent);
+
+  document.getElementById("download").textContent = t.download;
+  document.getElementById("copy").textContent = t.copy;
+  if (!valid) {
+    document.getElementById("invite").textContent = t.bad;
+    document.getElementById("copy").classList.add("hidden");
+  } else {
+    document.getElementById("invite").textContent = t.invite;
+    document.getElementById("code").textContent = code.slice(0, 3) + "-" + code.slice(3);
+    document.getElementById("how").textContent = params.get("noapp") ? t.noapp : t.how;
+    if (android) {
+      var fallback = location.origin + location.pathname + "?code=" + code + "&noapp=1";
+      var intent = "intent://friend/" + code + "#Intent;scheme=jetpenguin;package=com.ezdev.jetpenguin;" +
+                   "S.browser_fallback_url=" + encodeURIComponent(fallback) + ";end";
+      var open = document.getElementById("open");
+      open.href = intent;
+      open.textContent = t.open;
+      open.classList.remove("hidden");
+      if (!params.get("noapp")) {
+        location.href = intent;
+      }
+    }
+  }
+
+  document.getElementById("copy").addEventListener("click", function () {
+    var button = this;
+    var done = function () { button.textContent = t.copied; };
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(code).then(done, done);
+    } else {
+      done();
+    }
+  });
+</script>
+</body>
+</html>
